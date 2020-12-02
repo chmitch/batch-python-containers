@@ -1,13 +1,5 @@
----
-page_type: sample
-description: "A basic Python application that introduces Batch features such as pools, nodes, jobs, tasks, and interaction with Storage."
-languages:
-- python
-products:
-- azure
----
 
-# Azure Batch Python Quickstart
+# Azure Batch on Python Containers
 
 A basic Python application that introduces Batch features such as pools, nodes, jobs, tasks, and interaction with Storage. Each task writes a text file to standard output.
 
