@@ -67,6 +67,3 @@ First clone this repo so you'll have the necessary code to complete subsequent s
 1. Exexcute the batch-driver.py python script.  (Note: this was tested using VS Code, but there are many ways to run python including the cli)
 1. If you opted to install Batch Explorer, you can use it to monitor the state of your batch pool, batch job, and individual tasks.
 
-## Project code of conduct
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
