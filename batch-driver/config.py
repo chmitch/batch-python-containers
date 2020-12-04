@@ -19,6 +19,7 @@ _BATCH_ACCOUNT_NAME = '<batch account>'  # Your batch account name
 _BATCH_ACCOUNT_KEY = '<batch key>'  # Your batch account key
 _BATCH_ACCOUNT_URL = '<batch url>'  # Your batch account URL
 _STORAGE_CONNSTR = '<storage connection string>'  # Your storage connection string
+_STORAGE_KEY = '<storage key>'
 _POOL_ID = 'PrimeNumberPool'  # Your Pool ID
 _POOL_NODE_COUNT = 2  # Pool node count
 _POOL_VM_SIZE = 'STANDARD_A2'  # VM Type/Size

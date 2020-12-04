@@ -11,9 +11,11 @@ except NameError:
     pass
 
 import azure.storage.blob as azureblob
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions
 import azure.batch.batch_service_client as batch
 import azure.batch.batch_auth as batch_auth
 import azure.batch.models as batchmodels
+
 
 sys.path.append('.')
 sys.path.append('..')
@@ -72,7 +74,7 @@ def print_batch_exception(batch_exception):
     print('-------------------------------------------')
 
 #Not presently used, here for switching to leveraging files for task data
-def upload_file_to_container(block_blob_client, container_name, file_path):
+def upload_file_to_container(blob_service_client, container_name, file_path):
     """
     Uploads a local file to an Azure Blob storage container.
 
@@ -89,19 +91,23 @@ def upload_file_to_container(block_blob_client, container_name, file_path):
     print('Uploading file {} to container [{}]...'.format(file_path,
                                                           container_name))
 
-    block_blob_client.create_blob_from_path(container_name,
-                                            blob_name,
-                                            file_path)
+    blob_client = blob_service_client.get_blob_client(container_name,blob_name)
+    
+    with open(file_path, "rb") as data:
+      blob_client.upload_blob(data,overwrite=True)
+ 
+    #container_client = blob_service_client.get_container_client(container_name)
 
-    sas_token = block_blob_client.generate_blob_shared_access_signature(
-        container_name,
-        blob_name,
-        permission=azureblob.BlobPermissions.READ,
-        expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=2))
+    sas_token=generate_blob_sas(
+        account_name=blob_client.account_name,
+        container_name=blob_client.container_name,
+        blob_name=blob_name,
+        permission=BlobSasPermissions(read=True),
+        account_key=config._STORAGE_KEY,
+        expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+    )
 
-    sas_url = block_blob_client.make_blob_url(container_name,
-                                              blob_name,
-                                              sas_token=sas_token)
+    sas_url = blob_client.url + '?' + sas_token
 
     return batchmodels.ResourceFile(http_url=sas_url, file_path=blob_name)
 
@@ -186,7 +192,7 @@ def create_job(batch_service_client, job_id, pool_id):
     batch_service_client.job.add(job)
 
 
-def add_tasks(batch_service_client, job_id, start_number, end_number):
+def add_tasks(batch_service_client, job_id, input_file_paths):
     print('Adding tasks to job [{}]...'.format(job_id))
 
     # This is the user who run the command inside the container.
@@ -204,11 +210,11 @@ def add_tasks(batch_service_client, job_id, start_number, end_number):
 
     tasks = list()
 
-    for i in range (start_number,end_number):
+    for idx, input_file in enumerate(input_files):
         # The container needs this argument to be executed
         tasks.append(batchmodels.TaskAddParameter(
-            id='Task{}'.format(i),
-            command_line='python /is_prime.py ' + str(i),
+            id='Task{}'.format(idx),
+            command_line='python /is_prime.py {}'.format(input_file.http_url),
             container_settings=task_container_settings,
             user_identity=batchmodels.UserIdentity(auto_user=user)
         )
@@ -317,14 +323,13 @@ if __name__ == '__main__':
 
     # Placeholder for when we send files for input data instead of inline values
     # The collection of data files that are to be processed by the tasks.
-    #input_file_paths = [os.path.join(sys.path[0], 'taskdata0.txt'),
-    #                    os.path.join(sys.path[0], 'taskdata1.txt'),
-    #                    os.path.join(sys.path[0], 'taskdata2.txt')]
+    input_file_paths = [os.path.join(sys.path[0], 'file1.txt'),
+                        os.path.join(sys.path[0], 'file2.txt')]
 
     # Upload the data files.
-    #input_files = [
-    #    upload_file_to_container(blob_client, input_container_name, file_path)
-    #    for file_path in input_file_paths]
+    input_files = [
+        upload_file_to_container(blob_client, input_container_name, file_path)
+        for file_path in input_file_paths]
 
     # Create a Batch service client. We'll now be interacting with the Batch
     # service in addition to Storage
@@ -344,7 +349,7 @@ if __name__ == '__main__':
         create_job(batch_client, config._JOB_ID, config._POOL_ID)
 
         # Add the tasks to the job.
-        add_tasks(batch_client, config._JOB_ID, 100,120)
+        add_tasks(batch_client, config._JOB_ID, input_file_paths)
 
         # Pause execution until tasks reach Completed state.
         wait_for_tasks_to_complete(batch_client,

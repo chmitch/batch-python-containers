@@ -60,8 +60,7 @@ First clone this repo so you'll have the necessary code to complete subsequent s
     ```
 3. Now we'll test the container is working appropriately leveraging the -it command to interactively run the python script.  (Again, pay attention to the <> placeholders)
     ```
-    docker run -it <login server>/<registry name>/is_prime python is_prime.py 4
-    docker run -it <login server>/<registry name>/is_prime python is_prime.py 5
+    docker run -it <login server>/<registry name>/is_prime python is_prime.py <url to file>
     ```
 4. Now we need to connect to the created container registry and publish the container image.
     ```
